@@ -82,10 +82,45 @@ spring boot允许我们使用properties文件，YAML文件，environment variabl
 
 关于spring boot的PropertySource会按照顺序加载获取一下内容中的值，
 1.如果启动了devtools ，那么读取 ~/.spring-boot-devtools.properties
-2.用@TestPropertySource注解指定的或者自定义的properties文件或key/value值
+2.在TEST类中用@TestPropertySource注解指定的或者自定义的properties文件或key/value值。
+	如@TestPropertySource( properties = { "foo=xyz", "bar=uvw", "PATH=aaa", "java.runtime.name=bbb" },locations = "classpath:me/chanjar/annotation/testps/ex1/test-property-source.properties")
+3.在Test类上@SpringBootTest#properties注解
+4.Command line arguments.
+5.来自于SPRING_APPLICATION_JSON的properties
+6.ServletConfig init parameters.
+7.ServletContext init parameters.
+8.JNDI attributes from java:comp/env.
+9.Java System properties (System.getProperties()).
+10.OS environment variables.
+11.A RandomValuePropertySource that only has properties in random.*.
+12.Profile-specific application properties outside of your packaged jar (application-{profile}.properties and YAML variants)
+13.Profile-specific application properties packaged inside your jar (application-{profile}.properties and YAML variants)
+14.Application properties outside of your packaged jar (application.properties and YAML variants).
+15.Application properties packaged inside your jar (application.properties and YAML variants).
+16.@PropertySource annotations on your @Configuration classes.
+17.Default properties (specified using SpringApplication.setDefaultProperties).
 
 
+例如：
+@Component
+public class MyBean {
+    @Value("${name}")
+    private String name;
+}
+可以将application.properties文件中的key为name的值，注入到name字段。参考chaper20.ExternalizedConfiguration.java
+我们也可以把命令行中的设置的key注入给name，如下：
+java -jar app.jar --name="Spring"
 
+另外我们可以通过带有系统变量的命令行来传值，将值注入到@Value的字段上。
+如 SPRING_APPLICATION_JSON='{"foo":{"bar":"spam"}}' java -jar myapp.jar
+上面的例子中，spring boot会将json串变成foo.bar=spam的properties，放到spring的环境中，从而可以使用@Value获取到。
 
+通过系统变量的方式也可以：
+$ java -Dspring.application.json='{"foo":"bar"}' -jar myapp.jar
+或者通过下面命令行参数的形式也可以
+$ java -jar myapp.jar --spring.application.json='{"foo":"bar"}'
+or as a JNDI variable java:comp/env/spring.application.json.
 
+24.1 Configuring random values
+可以再properties文件中通过${random.value}这种形式，将一个随机数复制给key，然后通过@Value可以获取到这个值。
 
