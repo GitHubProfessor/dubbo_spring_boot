@@ -1,0 +1,63 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+    http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.sarnath</groupId>
+	<artifactId>my-dubbo-parent</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<properties>
+			<dubbo.version>2.5.7</dubbo.version>
+			<zookeeper.version>3.3.3</zookeeper.version>
+			<zkclient.version>0.1</zkclient.version>
+			<log4j.version>1.2.16</log4j.version>
+	</properties>
+	 <modules>
+	 	<module>my-dubbo-api</module>
+	 	<module>my-dubbo-order</module>
+	 	<module>my-dubbo-spring-boot</module>
+	 </modules>
+  
+	<dependencies>
+	    <dependency>
+	        <groupId>com.alibaba</groupId>
+			<artifactId>dubbo</artifactId>
+			<version>${dubbo.version}</version>
+	    </dependency>
+	    
+	    <dependency>
+	        <groupId>org.apache.zookeeper</groupId>
+			<artifactId>zookeeper</artifactId>
+			<version>${zookeeper.version}</version>
+			<!--解决错误 Could not transfer artifact com.sun.jdmk:jmxtools:jar:1.2.1 from/to java.net  -->
+			 <exclusions>  
+                <exclusion>  
+                    <groupId>javax.jms</groupId>  
+                    <artifactId>jms</artifactId>  
+                </exclusion>  
+                <exclusion>  
+                    <groupId>com.sun.jdmk</groupId>  
+                    <artifactId>jmxtools</artifactId>  
+                </exclusion>  
+                <exclusion>  
+                    <groupId>com.sun.jmx</groupId>  
+                    <artifactId>jmxri</artifactId>  
+                </exclusion>  
+            </exclusions>  
+	    </dependency>
+	    
+	    <dependency>
+	       	<groupId>com.github.sgroschupf</groupId>
+			<artifactId>zkclient</artifactId>
+			<version>${zkclient.version}</version>
+	    </dependency>
+	    
+	    	<dependency>
+				<groupId>log4j</groupId>
+				<artifactId>log4j</artifactId>
+				<version>${log4j.version}</version>
+			</dependency>
+	    
+	</dependencies>
+</project>

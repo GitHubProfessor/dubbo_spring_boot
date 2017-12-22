@@ -1,0 +1,91 @@
+@RestController相当于@Controller和@ResponseBody的结合。它将controller的结果自动转换为json格式的字符串。如：map HelloController（）{}，最后会自动将map转化为字符串返回给请求者。
+spring boot建议不要使用xml来启动SpringApplication.run()。而是使用@Configuration注解的类，来作为xml的替代者。一般来说将main方法所在的类，使用@Configuration.
+
+当然也不需要要将@Configuration都写到一个单独的类中，可以写到多个类中，然后使用@import注解来导入即可。
+
+如果非要使用xml，那么我们建议还是在main方法所在的类配置@Configuration，然后通过@ImportResource来读取xml
+
+一般来说spring boot会根据classpath中的jar，来自动配置。我们只要在我们含有@Configuration的类中添加 @EnableAutoConfiguration or @SpringBootApplication，spring boot就会实现自动配置。
+
+如果发现有的类，你不想让spirng boot自动配置，可以在@EnableAutoConfiguration中排除它，如下（不让spring boot加载DataSourceAutoConfiguration相关配置）：
+@Configuration
+@EnableAutoConfiguration(exclude={DataSourceAutoConfiguration.class})
+public class MyConfiguration {
+}
+
+
+关于spring beans的定义和依赖注入
+如果spring boot的启动mian方法所在的类，是在项目包结构的根目录，那么我们直接在这个main方法所在的类上添加@ComponentScan注解即可。这样所有@service @component注解的类会直接自动注册到spring中。
+
+
+对于打成jar包的app，我们也可以使用eclipse进行调试
+首先通过命令启动jar包程序如下：
+	java -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8000,suspend=n \ -jar app.jar
+然后进入debu configuration中找到remote application进行配置（此处可通过百度查找具体方法），然后在本地代码上打上断点，当请求时，变回调到断点出。       
+
+
+spring-boot-devtools依赖是spring提供的一个辅助开发用的jar包。通过它我们可以实现spring-boot的热部署。
+默认情况下，在用jar包启动的时候，热部署是禁用的。
+
+#另外可以配置修改resource下的static文件夹内容是，不重启程序
+spring.devtools.restart.exclude=static/**
+
+详情参照官网 DevToolsPropertyDefaultsPostProcessor.
+
+
+$ java -jar myproject-0.0.1-SNAPSHOT.jar --debug  这种使用--debug的方式启动，可以打印一份 full auto-configuration的报告。
+
+通过在classpath下创建一个banner.txt文件，spring boot启动时可以吧里面的东西打印在控制台。也可以放一个 banner.jpg的图片。图片会被变成字符打印在控制台。
+当然也可以通过代码来定义banner来代替banner.txt,如下（只有在没有banner.txt这样的静态文件时，代码的banner才要用）：
+ Banner banner = new Banner(){
+	@Override
+	public void printBanner(Environment environment, Class<?> sourceClass, PrintStream out) {
+		System.out.println("good idea");
+	}
+};
+springApplication.setBanner(banner);
+springApplication.run(args);
+    	
+自定义SpringApplication，上面的方法就是一个自定义的样子。当然除了代码方式，还可以通过application.properties来设置。后面讲讨论   	
+
+ApplicationContext 被创建前（spring boot 启动时），通常会有其他的一些事件先被触发。因此不能将这些监听器声明为@Bean。
+我们可以通过SpringApplication.addListeners(…​) or SpringApplicationBuilder.listeners(…​)来注册事件，
+如果想让spring boot自动完成这些事情，可以添加META-INF/spring.factories文件，然后在里面添加如下内容即可：
+org.springframework.context.ApplicationListener=com.example.project.MyListener
+关于具体应用代码，在listener包中
+
+23.6 Web environment
+spring boot 的spring application会根据你现在开发的是否是web程序来自动创建一个正确的ApplicationContext（创建上下文默认使用AnnotationConfigApplicationContext or AnnotationConfigEmbeddedWebApplicationContext） 。
+我们也可以通过setWebEnvironment(boolean webEnvironment)来覆盖默认的方式。
+
+23.7 Accessing application arguments
+如果想访问启动时传递给SpringApplication.run(…​)中的参数，可以声明一个@Component类，然后构造方法注入一个ApplicationArguments ，当程序启动时，spring创建这个类时，会自动将参数注入到这个接口中。
+应用参考代码示例AccessingApplicationArgumentsBean
+
+23.8 Using the ApplicationRunner or CommandLineRunner
+如果想在SpringApplication启动之后执行一些代码，可以通过实现ApplicationRunner or CommandLineRunner两种方式。这俩个接口都通了一个run方法，在SpringApplication.run(…​)执行完成后，便会调用这个run方法。
+ApplicationRunner or CommandLineRunner不同之处在于，参数不同，一个是run(String... args),一个是run(ApplicationArguments args)
+代码参考CommandLineRunnerBean
+
+23.9 Application exit
+如果一个bean实现了ExitCodeGenerator 接口，那么当执行SpringApplication.exit()的时候，就会调用这个类中实现的接口的方法。
+
+
+23.10 Admin features
+如果应用想启用admin相关的功能，可以指定spring.application.admin.enabled属性。这会在平台MBeanServer上暴露SpringApplicationAdminMXBean。你可以使用这个功能远程的管理你的Spring Boot应用。对于任何服务包裹的实现这是很有用的。
+如果你想知道应用运行的HTTP接口，通过关键字local.server.port可以得到这个属性。
+当启用这个功能时要非常小心，因为MBean会暴露一个关闭应用的方法。
+
+24. Externalized Configuration
+spring boot允许我们使用properties文件，YAML文件，environment variables and command-line arguments 来扩展我们的配置。Proerty values可以被直接注入到使用了@Value注解的字段中。
+或者通过@ConfigurationProperties可以把properties或者yml配置直接转成对象。
+
+关于spring boot的PropertySource会按照顺序加载获取一下内容中的值，
+1.如果启动了devtools ，那么读取 ~/.spring-boot-devtools.properties
+2.用@TestPropertySource注解指定的或者自定义的properties文件或key/value值
+
+
+
+
+
+

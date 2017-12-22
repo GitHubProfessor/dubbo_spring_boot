@@ -1,0 +1,49 @@
+<plugins>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<mainClass>com.sarnath.App</mainClass>
+				</configuration>
+			</plugin>
+			<!--第一步： 打jar包时使用 -->
+			<!-- maven-jar-plugin插件可以生成jar包中的mainfest文件，并且指定其中的classpath（依赖jar包的路径）和main函数（入口）信息。一旦有了mainfest文件信息，即可通过 java -jar x.jar来运行该jar文件。  -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>com.sarnath.App</mainClass><!-- 将这个类的main方法写入到manifest文件中。这样才能再执行jar命令时，找到对应的mian方法启动程序。 -->
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			
+			 <!--第二步： 将依赖包放到lib文件夹中 ，否则不会将程序中使用的第三方jar一同打包到项目中，会导致运行时找不到类-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                              <!-- ${project.build.directory}为Maven内置变量，缺省为target -->  
+                            <outputDirectory>
+                                ${project.build.directory}/lib
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+			<!-- 以上2步设定后，才能成功执行打好的spring-boot的jar包，启动tomcat-->
+			<!--  打包后,将在target下生成项目jar包xxx.jar及lib文件夹,将这两者放在同一目录下，执行java -jar xxx.jar即可运行。 -->
+		</plugins>

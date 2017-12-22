@@ -1,0 +1,11 @@
+ Application events分为以下五种，在程序启动时，按照一定的顺序传给listener，在通过spring-devl-tool自动重启机制下，通过控制台发现，
+ 
+ ApplicationStartingEvent： 程勋启动之前这个even会被发送到listener。只有在第一次手动启动程序时，调用一次。
+ 
+ ApplicationEnvironmentPreparedEvent ：spring boot 对应Enviroment已经准备完毕，但此时上下文context还没有创建。
+ 
+ ApplicationPreparedEvent : context 被refresh之前, 所有的@bean被创建之后
+ 
+ ApplicationReadyEvent ：该事件表示application应该初始化完成，可以准备接收请求。 可以通过ApplicationReadyEvent获取ConfigurableApplicationContext，然后通过ConfigurableApplicationContext 获取bean的信息
+ 
+ ApplicationFailedEvent:启动时发生异常时发送到listener
