@@ -36,6 +36,7 @@ public class App
     	SpringApplication springApplication = new SpringApplication(App.class);
     	SpringApplication.run(App.class, args);
         System.out.println( "Hello World!" );
+        //springApplication.setAddCommandLineProperties(false); //24.2 Accessing Command Line Properties
     }
     
     

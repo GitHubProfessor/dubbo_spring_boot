@@ -1,0 +1,205 @@
+chpater24中的所有properties文件都是用resources/ConfigurationPropertires.properties
+
+24.2 Accessing Command Line Properties
+	默认情况下，SpringApplication 会将命令行中（dos或者linux中的如：--serve.port=3000）中的参数转换为一个property，然后添加到SPring中的Environment。
+	注：命令中的属性优先级要高于其他的property值。也就是其他的有可能会被命令行中的参数值给替换掉。
+	
+	如果不想让command line properties添加到Environment中，可以使用如下命令：SpringApplication.setAddCommandLineProperties(false).
+	
+24.3 Application Property Files
+	SpringApplication(对象)默认会从下面路径的application.properties文件中读取properties ，然后将他们添加到Spring的 Environment。路径如下：
+	1.当前目录下的config子文件夹
+	2.当前文件夹
+	3.classpath 下的 /config package
+	4.classpath 根目录（root）
+	
+	上面的1到4是按照查找文件的优先级来写的。
+	
+	PS：你也可以使用YAML(.yml)文件来代替.properties文件
+	
+	如果不想使用默认的application.properties作为配置文件的文件名，可以通过在命令行中使用spring.config.name来设置配置文件的文件名，或者在命令行使用spring.config.location来直接将指定路径下的文件作为配置文件。
+	示例如下：
+	$ java -jar myproject.jar --spring.config.name=myproject
+	$ java -jar myproject.jar --spring.config.location=classpath:/default.properties,classpath:/override.properties   //可以通过逗号指定多个路径
+	如果指定位置时，设置的是一个文件夹，那么需要在文件夹后面跟一个/。如：file:./config/
+	如果我们通过上面方法修改了配置文件的名子或者显式的指定了配置文件的位置，那么会先根据我们设置的去查找配置文件，如果没找到，会继续到默认的位置去查找。另外，如果存在相同的值，时会被覆盖的。
+	
+	PS：如果你是用的时environment variables而不是system properties，有可能有些操作系统不允许使用.，那么可以使用_来代替。如：SPRING_CONFIG_NAME 代替 spring.config.name
+	
+24.4 Profile-specific properties（一种通过profile来切换配置文件的方式）
+	profile就是一种利用占位符的模式，通过指定这个占位符的值，来读取不同的配置文件。格式如下：
+	application-{profile}.properties
+	也就是说，只要通过设置{profile}的值，能在项目中找到对应的文件，就可以加载对应的属性文件。
+	
+	如何设定这个profile占位符的值呢，如下：
+	
+	例如：可以设置两个properties文件，分别是“application-test.properties”和“application-prod.properties”，分别用于配置开发环境和生产环境的一些如数据库地址等属性。
+	这是只要在application.properties”中设置active，就可以实现根据给active赋的值，来指定加载那个配置文件。如下：
+	spring.profiles.active=test
+	因为active时test，那么springboot就会查找application-test.properties文件，并加载里面配置的属性。
+	如果找不到对应的文件，那么就读取默认的application-default.properties中的属性值
+	
+	当Profile-specific properties 与其他没有使用Profile-specific方式的properties文件，含有相同的key时，最终会使用profile-specific-properties文件中的内容
+	
+	PS：If you have specified any files in spring.config.location, profile-specific variants of those files will not be considered. 
+		Use directories in spring.config.location if you also want to also use profile-specific properties.
+	 
+	参考：https://www.cnblogs.com/GoodHelper/p/6260708.html
+	
+24.5 Placeholders in properties	（properties文件中的占位符）
+	如在application.properties文件中，使用这种占位符，当做变量来使用。
+	app.name=MyApp
+	app.description=${app.name} is a Spring Boot application
+	
+24.6 Using YAML instead of Properties
+	YAML是一种类似于json的样子的数据格式，当在classpath中加入 SnakeYAML library后，SpringApplication就可以自动支持这种格式
+	
+	PS：如果使用了spring-boot-starter，那么snakeYAML会自动被提供。
+	
+	24.6.1 Loading YAML
+	
+			Spring Framework 提供了2中非常方便的类来读取YAML文件，如下：
+			1.YamlPropertiesFactoryBean类把YAML解析为Properties，YamlMapFactoryBean 把YAML解析为Map。例子如下：
+			如一个YAML文件如下：
+				environments:
+			    dev:
+			        url: http://dev.bar.com
+			        name: Developer Setup
+			    prod:
+			        url: http://foo.bar.com
+			        name: My Cool App
+		        
+			 转换为properties为：
+				environments.dev.url=http://dev.bar.com
+				environments.dev.name=Developer Setup
+				environments.prod.url=http://foo.bar.com
+				environments.prod.name=My Cool App
+				
+			如果一个YAML中有一个key的value有多个值，那么解析为properites后，会变为数组，然后通过[index]来读取，如下：
+				my:
+		   			servers:
+			       		- dev.bar.com
+			       		- foo.bar.com
+			转换后变为：
+				my.servers[0]=dev.bar.com
+				my.servers[1]=foo.bar.com
+		
+			那么如何将YAML绑定到java代码中呢？如下方式（以上面的内容为例）
+			@ConfigurationProperties(prefix="my")
+			public class Config {
+			    private List<String> servers = new ArrayList<String>();
+			    public List<String> getServers() {
+			        return this.servers;
+			    }
+			}
+			
+	24.6.2 Exposing YAML as properties in the Spring Environment
+		The YamlPropertySourceLoader class can be used to expose YAML as a PropertySource in the Spring Environment.
+		This allows you to use the familiar @Value annotation with placeholders syntax to access YAML properties.
+	
+	
+	24.6.3 Multi-profile YAML documents(多个采用profile形式的YAML文件）
+		你可以在一个YAML 文件中通过使用spring.profiles来实现根据application.properties中的active的不同设定，来使用对应的profile中的内容。例如：
+		server:
+		    address: 192.168.1.100
+		---
+		spring:
+		    profiles: development
+		server:
+		    address: 127.0.0.1
+		---
+		spring:
+		    profiles: production
+		server:
+		    address: 192.168.1.120
+		    
+		在这个例子中，如果指定profile为development，那么servver.address将会使用127.0.0.1
+		如果没有找到对应的profile，那么将使用默认的192.168.1.100.
+		
+		
+		去了上面的方式外，也可以建立多个yaml文件，然后通过active来设置加载那个文件，如下
+		**********************************************************
+		*	application-dev.yml                                  *
+		*	server:                                              *
+		*	  port: 8080                                         *
+		*	                                                     *
+		*	manInfo:                                             *
+		*	    age: 18                                          *
+		*	    name: jason                                      *
+		*	                                                     *
+		*	application-prod.yml                                 *
+		*	                                                     *
+		*	server:                                              *
+		*	  port: 8081                                         *
+		*	                                                     *
+		*	manInfo:                                             *
+		*	    age: 18                                          *
+		*	    name: alun                                       *
+		*	                                                     *
+		*	而原有的application.yml则改成这样：                  					 *
+		*	spring:                                              *
+		*	  profiles:                                          *
+		*	    active: prod                                     *
+		*	spring.profiles.active: 配置文件名（比如这里是 prod或  dev     *
+		**********************************************************
+		
+	24.6.4 YAML shortcomings（YAML的缺点）
+	YAML不能通过 @PropertySource读取，因此，在需要以@PropertySource这种方式加载值的情况下，需要使用属性文件。
+	
+	24.6.5 Merging YAML lists
+	
+24.7 Type-safe Configuration Properties()
+		有时候使用 @Value("${property}")来注入属性文件中的值时很麻烦的，特别是当需要同时注入多个属性值，或者数据是有一定层次关系的（如下面的例子）
+		Spring引导提供了一种处理属性的方法，允许强类型bean管理和验证应用程序的配置（通过bean结束属性文件中的内容）。
+		************************************************************************************
+		*	参考chapter24/ConfigurationProperties.java,演示了如何通过此方式获取yaml中的属性值。   		   *
+		*	类中要获取的属性值，在application.yml中。                                                                                                                                            *
+		********************************************************************************   *
+		我们发现，通过类的方式，用collection，String等类型来直接接受properties中的值。只要层次关系对应，就可以接收到。有点像springmvc中control接收页面传过来的值
+		
+		Tip:除了通过在ConfigurationPropertires.java中使用@Component来注册类为spring bean来讲yml中的属性导入，还可以通过在@Configuration注解的类中，
+		注册ConfigurationProperties.java的形式，也可以让yml中的内容赋值到类中的属性，写法如下：
+		**********************************************************************************
+		*	@Configuration                                                               *
+		*	@EnableConfigurationProperties(ConfigurationPropertires.class)               *
+		*	public class MyConfiguration {                                               *
+		*	}                                                                            *
+		**********************************************************************************
+		可参考：http://blog.csdn.net/clementad/article/details/51970962
+		
+		
+		
+	24.7.1 Third-party configuration
+	通过在一个public的方法上同时使用使用@ConfigurationProperties和@Bean注解，可以将properties绑定到这个方法返回的bean中。
+	这样当第三方（或者其他类）在代码中通过@autowired	使用这个@Bean注解方法返回的对象是 ，就可以直接得到properties里面的内容了。
+	因为使用@Bean的时候，会自动把properties中的内容设置到方法返回对象中。
+	
+	参考：chapter24/ConfigurationProperties.java中的@Autowired部分。
+	
+	
+	24.7.2 Relaxed binding
+	Spring Boot使用了一些很宽松的方式 binding Environment properties 到使用 @ConfigurationProperties的beans上，不需要我们精确地匹配属性名称和bean的属性名称
+	一个共同的例子就是， Environment properties中dashed separated（虚线隔开的单词）的属性也可以直接对应到bean中不带虚线的属性中。例如：
+	properties中的context-path 可以自动绑定到bean中的属性 contextPath
+	或者
+	properties中的PORT可以自动绑定到port属性中
+	
+	实例参考：chatper24/RelaxedBinding.java
+			properties文件为：resources/ConfigurationPropertires.properties
+	
+	24.7.3 Properties conversion
+		Spring will attempt to coerce the external application properties to the right type 
+		when it binds to the @ConfigurationProperties beans. 
+		If you need custom type conversion you can provide a ConversionService bean (with bean id conversionService) 
+		or custom property editors (via a CustomEditorConfigurer bean) or 
+		custom Converters (with bean definitions annotated as @ConfigurationPropertiesBinding).
+		
+	24.7.4 @ConfigurationProperties Validation
+		@ConfigurationProperties支持JSR-303 bean验证 - javax.validation,可以对bean中的属性进行一些验证，从而判断properties文件或者yml文件映射到bean中属性的值
+		是否符合要求。 在属性的前面使用javax.validation中提供的验证的注解即可。
+		实例参考：chapter24/ConfigurationPropertiesValidation.java
+		
+		Tip:除了使用JSR-303的validation外，也可以使用spring自定义validator，具体方式参考git上例子：https://github.com/spring-projects/spring-boot/tree/v1.5.9.RELEASE/spring-boot-samples/spring-boot-sample-property-validation
+		
+		
+	

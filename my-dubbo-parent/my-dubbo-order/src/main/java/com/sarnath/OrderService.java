@@ -2,24 +2,23 @@ package com.sarnath;
 
 public class OrderService implements IOrderService {
 
-	@Override
 	public String queryOrder() {
-		return "orderA";
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	@Override
 	public void createOrder() {
-		System.out.println("create order successfully");
+		// TODO Auto-generated method stub
+		
 	}
 
-	@Override
 	public void modifyOrder() {
-		System.out.println("modify order successfully");
+		// TODO Auto-generated method stub
+		
 	}
 
-	@Override
 	public void deleteOrder() {
-		System.out.println("delete order successfully");
+		// TODO Auto-generated method stub
+		
 	}
-
 }
