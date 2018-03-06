@@ -15,7 +15,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<start-class>com.sarnath.App</start-class>
-		<spring.boot.version>1.5.9.RELEASE</spring.boot.version>
+		<spring.boot.version>2.0.0.RELEASE</spring.boot.version><!-- 1.5.9.RELEASE -->
 	</properties>
 
 
@@ -23,6 +23,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+			<version>${spring.boot.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
 			<version>${spring.boot.version}</version>
 		</dependency>
 
@@ -37,9 +42,15 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<version>${spring.boot.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+			<version>${spring.boot.version}</version>
+		</dependency>
+		
 
-		<!-- 为开发者服务的模块，,此模块有很多辅助开发功能。
-		比如此处使用它来实现热部署（修改类后自动重启。比手动重启快得多）， -->
+		<!-- 为开发者服务的模块，,此模块有很多辅助开发功能。 比如此处使用它来实现热部署（修改类后自动重启。比手动重启快得多）， -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>

@@ -201,5 +201,13 @@ chpater24中的所有properties文件都是用resources/ConfigurationPropertires
 		
 		Tip:除了使用JSR-303的validation外，也可以使用spring自定义validator，具体方式参考git上例子：https://github.com/spring-projects/spring-boot/tree/v1.5.9.RELEASE/spring-boot-samples/spring-boot-sample-property-validation
 		
-		
+	24.7.5 @ConfigurationProperties vs. @Value
+	@Value是core container中的特性，他没有提供这种 type-safe Configuration Properties的特性。下面是两者的一些区别
+		*********************************************************************************
+		*		Feature				@ConfigurationProperties				@Value      *
+		*	Relaxed binding					Yes									No      *
+		*	Meta-data support				Yes									No      *
+		*	SpEL evaluation					No									Yes	    *
+	  	*********************************************************************************
+	  	
 	

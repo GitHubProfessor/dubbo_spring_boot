@@ -1,0 +1,60 @@
+26. Logging
+	spring boot 内部默认使用的是 Commons Logging。也可以使用第三方log日志。默认的配置可用于java Util logging、log4j2和Logback。日志默认的时通过控制台打印。
+	默认情况下，如果使用"Starters"方式配置的spring boot相关内容，那么将默认使用Logback来做日志记录。
+	
+	26.1 Log Format
+		log默认的输出样式如下：
+		*****************************************************************************************************************************************
+		2014-03-05 10:57:51.112  INFO 45469 --- [           main] org.apache.  : Starting Servlet Engine: Apache Tomcat/7.0.52
+		2014-03-05 10:57:51.253  INFO 45469 --- [ost-startStop-1] o.a.c.c.C.[  : Initializing Spring embedded WebApplicationContext
+		2014-03-05 10:57:51.253  INFO 45469 --- [ost-startStop-1] o.s.web.con  : Root WebApplicationContext: initialization completed in 1358 ms
+		2014-03-05 10:57:51.698  INFO 45469 --- [ost-startStop-1] o.s.b.c.e.S  : Mapping servlet: 'dispatcherServlet' to [/]
+		2014-03-05 10:57:51.702  INFO 45469 --- [ost-startStop-1] o.s.b.c.emb  : Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+		*****************************************************************************************************************************************
+		输入的内容主要包括以下几部分：
+		1.日期和时间
+		2.log级别：ERROR, WARN, INFO, DEBUG, or TRACE.
+		3.Process ID.
+		4.---分隔符
+		5.线程名
+		6.logger名称：通常设置为类的类名
+		7.log的内容
+		
+	Tip：Logback does not have a FATAL level. It is mapped to ERROR.
+	
+	26.2 Console Output
+		默认情况下ERROR-level, WARN-level, and INFO-level 这几个级别的log信息会打印在控制台，我们也可以在启动程序时，通过添加属性 --debug来让DEBUG-level级别的日志信息也打印出来。
+		如下，在命令行中使用--debug来启东debug模式，从而将debug级别的日志信息，也打印出来：
+		$ java -jar myapp.jar --debug
+		或者可以通过application.properties中使用debug=true来设置，效果一样。
+		除了debug还可以通过上面的方式设置trace-level。
+		
+		26.2.1 Color-coded Output
+		如果终端支持ANSI，那么可以通过配置，来对不同级别的信息，显示不同的颜色，从而增加可读性。设置方式如下：
+		spring.output.ansi.enabled
+		具体参考官网。此处不走过多说明。
+		
+	26.3 File Output
+		默认spring boot log写在控制台，而不是文件中，如果想打印到文件中，需要设置logging.file 或者 logging.path property (for example, in your application.properties).
+		下表面表格，描述了file和path的使用
+		***************************************************************************************************************************************
+		logging.file	logging.path			Example				Description
+		(none)			(none)										Console only logging.
+		Specific file	(none)					my.log				Writes to the specified log file. Names can be an exact location or relative to the current directory.
+		(none)			Specific directory		/var/log			Writes spring.log to the specified directory. Names can be an exact location or relative to the current directory.
+		***************************************************************************************************************************************
+		
+		记录日志的文件当大于10MB时，就会重新新建一个文件，继续记录。与控制台一样，文件记录日志，默认也是打印ERROR-level, WARN-level, and INFO-level的内容。
+		如果想修改文件大小是在使用默认的10MB ，可以通过logging.file.max-size来进行设置
+		
+	26.4 Log Levels
+		log日志的级别设置，可以通过spring Environment 中进行设置。如在application.properties中，通过logging.level.*=error，trace等其他级别来设置。实例如下：
+		*******************************************************************
+		*	logging.level.root=WARN                                       *
+		*	logging.level.org.springframework.web=DEBUG                   *
+		*	logging.level.org.hibernate=ERROR                             *
+		*******************************************************************
+		
+		其他请参考官网。日志相关不多翻译
+	
+	

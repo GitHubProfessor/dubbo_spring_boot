@@ -1,0 +1,46 @@
+25. Profiles
+		Spring Profiles 类似于application-dev.properties和application-pro.properties的用法（比如生产环境使用pro-properties，开发环境使用dev-properties。）
+		任何使用了@Compnent或者@Configuration注解的类，在使用@Profile注解来限定启动时是否加载这个类即可。
+		实例如下：
+			***********************************************************
+			*	@Configuration                                        *
+			*	@Profile("production")                                *
+			*	public class ProductionConfiguration {                *
+			*	    // ...                                            *
+			*	}                                                     *
+			***********************************************************	
+		你可以使用spring.profiles.active 或者 Environment来指定哪profile被激活，也就是说，如果@Profile注解中设置的值，包含在spring.profiles.active中，那么它就会被在启动时被spring加载
+		放到容器中，如果不存在他就不会加载。例如：
+		spring.profiles.active=dev,hsqldb
+		也可以使用命令行的方式，在命令行后加如下属性来制定：
+		--spring.profiles.active=dev,hsqldb
+		
+		上面两种方式的active因为没有production，所以@Profile("production")注解的这个类，在spring boot启动时，不会被构造，放到容器中。
+		如果这时，我们把@Profile("production")改为@Profile("dev")，那么spring boot 启动时就会构造这个类。
+		
+		那么，具体的意义是什么呢？
+		我们知道通过@Compnent或者@Configuration注解的类，都会被spring启动时被构造，然后放到spring的容器中，加入这时我们不是properties文件来设置配置信息，而是通过类的方式，通过代码来初始化一些配置信息，
+		并且开发环境和生产环境的初始化的信息是不相同的（也就是所谓的开发环境，和生产环境），那么我就就可以使用这种@Profile注解的方式，来定义2中不同的方式的配置，然后通过
+		spring.profiles.active后者命令行的方式，指定spring boot启动时使用加载那个类，没有被指定的那个将不会被加载。
+		
+		这样就实现了，在不改动代码，而只是通过修改application.properties文件的方式，就可以方便选择加载那些类。
+		参考实例：/chapter25/Profiles.java
+	
+	
+	
+	25.1 Adding Active Profiles（叠加属性多个属性文件中的值）
+		spring.profiles.active指定的property与其他的property有着相同的排序规则，级别最高的PropertySource指定的文件，这也就是说，
+		你在application.properties中设置的active profile，可以在命令行中设置替换他们
+		
+		除了替换属性文件中的值，我们又是受项叠加properties或者YAML属性文件中的内容，这时，便可以使用spring.profiles.include。
+		spring.profiles.include = develop,production
+		如上面这样，那么只要@Profile的值在这里面包含，就会都无条件的被添加。
+	
+	25.2 Programmatically Setting Profiles（通过编程方式设置Profile）
+		启动程序前，使用SpringApplication.setAdditionalProfiles(…​)方法去设置要是用哪个@Profile注解的类。
+		
+	25.3 Profile-specific Configuration Files
+		Profile-specific variants of both application.properties (or application.yml) 
+		and files referenced through @ConfigurationProperties are considered as files and loaded.
+		See "Section 24.4, “Profile-specific Properties”" for details.
+			

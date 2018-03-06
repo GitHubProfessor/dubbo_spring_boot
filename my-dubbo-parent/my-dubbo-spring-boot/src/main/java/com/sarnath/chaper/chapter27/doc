@@ -1,0 +1,338 @@
+27. Developing Web Applications
+	spring boot 非常适合开发web项目，可以非常方便的创建一个嵌入 Tomcat, Jetty, Undertow, or Netty的http服务端。
+	通过spring-boot-starter-web module可以快速的开始一个web程序。或者使用spring-boot-starter-webflux 创建一个反应式的 reactive web applications
+	
+	27.1 The “Spring Web MVC Framework”
+		spring MVC允许你通过在类上使用@Controller or @RestController来接收HTTP reqeust。在方法上使用@RequestMapping注解来映射url中对应的内容。
+		
+		27.1.1 Spring MVC Auto-configuration
+			现阶段未翻译，未做实例，请参考官网
+		
+		27.1.2 HttpMessageConverters
+			SpringMVC使用HttpMessageConverter来处理request和response.例如可以将一个object自动转换为JSON或者XML作为resposne返回到浏览器。
+			Spring 为我们内置了大量的HttpMessageConverter，例如， MappingJackson2HttpMessageConverter 、StringHttpMessageConverter 等。
+			这也就是为什么，我们controller中返回一个对象可以直接变成json返回到页面上的原因。
+			
+			因此，我们就可以自定义一个HttpMessageConverter，来接受Accept为application/x-java-serialization的请求，
+			然后通过我们自定义的Converter产生一个我们自定义个的数据格式，作为response返回到浏览器。
+			具体实现参考：chapter27/chapter27_1_2包下的代码。代码介绍了如果创建一个自定义HttpMessageConverter，如何注册它。如何使用它。
+			实例的请求，通过postman来模拟，postman主要的设置为，使用get方式，然后在Header选项卡中，添加一个Accept和application/x-java-serialization的键值对即可。
+			
+			27.1.3 Custom JSON Serializers and Deserializers（序列化或者反序列化）
+			如果你是用Jackson序列化或者反序列化JSON data，你可能想自己实现JsonSerializer 和 JsonDeserializer 类，spring boot提供了一种简单的方式来实现。
+			你只要将@JsonComponent注解添加到 JsonSerializer or JsonDeserializer的实现上就行，也可以将 JsonSerializer or JsonDeserializer作为一个类的内部类，然后在
+			他们的外部类上使用@JsonComponent，如下；
+			**************************************************************************************
+				@JsonComponent
+				public class Example {
+					public static class Serializer extends JsonSerializer<SomeObject> {
+						// ...
+					}
+					public static class Deserializer extends JsonDeserializer<SomeObject> {
+						// ...
+					}
+				}
+			*************************************************************************************
+			所有ApplicationContext 中的的使用@JsonComponent的bean都会被自动使用jackson注册。因为@JsonComponent中含有@Component注解。
+			spring boot还提供了 JsonObjectSerializer and JsonObjectDeserializer
+		
+		27.1.4 MessageCodesResolver
+			Spring MVC has a strategy for generating error codes for rendering error messages from binding errors: MessageCodesResolver. 
+			If you set the spring.mvc.message-codes-resolver.format property PREFIX_ERROR_CODE or POSTFIX_ERROR_CODE, 
+			Spring Boot creates one for you (see the enumeration in DefaultMessageCodesResolver.Format).
+			
+		27.1.5 Static Content(静态资源)
+			默认情况下，spring boot从classpath或者ServletContext下/static (or /public or /resources or /META-INF/resources)文件夹下读取静态文件。
+			例如，实例中，在static文件夹下放了一张static.png图片，然后，启动程序后，在浏览器中输入http://localhost:8089/static.png，spirng boot便自动先去static文件夹下去找这个图片。
+			找到了就显示出来。
+			
+			其实现是因为使用了springmvc的ResourceHttpRequestHandler。所以我们可以通过添加WebMvcConfigurer，然后重写addResourceHandlers 方法，来定义读取静态资源的位置。
+			
+			在一个单独的web应用中，默认的servlet是启动的，如果不想使用spring去处理url这种映射，那么将会被servlet的ServletContext的处理。不过，大多数情况下，这种事情是不会发生的，因为spring
+			总是通过DispatcherServlet处理所有的请求。
+			
+			默认情况下，URL中通过/***这种方式来映射静态资源文件（如：http://localhost:8089/static.png，将会映射到static文件夹中的static.png）。
+			但是，我们可以通过配置spring.mvc.static-path-pattern属性，来设置url需要怎么写，来映射到static文件夹下。如下，在application.properties文件中配置
+			*************************************************
+			spring.mvc.static-path-pattern=/resources/**
+			*************************************************
+			那么，我们我们就需要在url中通过http://localhost:8089/resources/static.png这样的写法，才能访问到static.png图片了。原先的写法，将无法映射到static文件夹下的static.png。
+			
+			
+			除了上面的方法外，我们还可以通过spring.resources.static-locations属性是，来指定url中的静态文件，映射到其他文件中（让spring boot去其他文件夹去找url中要访问的静态资源），如下
+			在application.properties中如下配置
+			******************************************************************
+			spring.resources.static-locations=classpath:/staticContent/
+			******************************************************************
+			同时，我们在resource下新建staticContent文件夹，存放一张staticContent.png图片，那么我们在浏览器访问http://localhost:8089/staticContent.png，我们发现
+			spring boot使用了我们配置文件中指定的路径，到staticContent文件夹中去查找并显示了staticContent.png文件，而没有到默认的static文件夹下查找staticContent.png文件（否则页面将显示404）
+			
+			另外还有一种编码的方式来设置静态资源的映射方式，方法如下：
+			****************************************************************************************************
+			*	import org.springboot.sample.interceptor.MyInterceptor1;                                       *
+			*	import org.springboot.sample.interceptor.MyInterceptor2;                                       *
+			*	import org.springframework.context.annotation.Configuration;                                   *
+			*	import org.springframework.web.servlet.config.annotation.InterceptorRegistry;                  *
+			*	import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;              *
+			*	import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;              *
+			*	                                                                                               *
+			*	@Configuration                                                                                 *
+			*	public class MyWebAppConfigurer extends WebMvcConfigurerAdapter {                              *                                                                                          *
+			*	    @Override                                                                                  *
+			*	    public void addResourceHandlers(ResourceHandlerRegistry registry) {                        *
+			*	        registry.addResourceHandler("/myres/**").addResourceLocations("classpath:/static/");   *
+			*	        super.addResourceHandlers(registry);                                                   *
+			*	    }                                                                                          *                                                                                           *
+			*	}                                                                                              *
+			*                                                                                                  *
+			****************************************************************************************************
+			通过配置类设置后，表可以通过 http://localhost:8080/myres/static.png访问到/static文件夹下的图片了。
+			使用配置类设置是，请注释掉application.properties中的配置切换来看效果。
+			配置类参考：/chapter27/chapter27_1_5/MyWebAppConfigurer.java
+			
+			
+			
+			
+			此外，上述标准的静态资源位置有个例外情况是Webjars内容。任何在/webjars/**路径下的资源都将从jar文件中提供，只要它们以Webjars的格式打包。
+			注：如果你的应用将被打包成jar，那就不要使用src/main/webapp文件夹。尽管该文件夹是一个共同的标准，但它仅在打包成war的情况下起作用，并且如果产生一个jar，多数构建工具都会静悄悄的忽略它。
+			
+			
+			静态资源版本管理
+				Spring MVC 提供了静态资源版本映射的功能。
+				
+				用途：当我们资源内容发生变化时，由于浏览器缓存，用户本地的静态资源还是旧的资源，为了防止这种情况导致的问题，我们可能会手动在请求url的时候加个版本号或者其他方式。
+				
+				版本号如：
+				
+				<script type="text/javascript" src="/js/sample.js?v=1.0.1"></script>
+				Spring MVC 提供的功能可以很容易的帮助我们解决类似问题。
+				Spring MVC 有两种解决方式。
+				注意：下面的配置方式针对freemarker模板方式，其他的配置方式可以参考。
+				资源名-md5 方式
+				例如：
+				
+				<link rel="stylesheet" type="text/css" href="/css/index-2b371326aa93ce4b611853a309b69b29.css">
+				Spring 会自动读取资源md5，然后添加到index.css的名字后面，因此当资源内容发生变化的时候，文件名发生变化，就会更新本地资源。
+				配置方式：
+				在application.properties中做如下配置：
+				spring.resources.chain.strategy.content.enabled=true
+				spring.resources.chain.strategy.content.paths=/**
+				这样配置后，所有/**请求的静态资源都会被处理为上面例子的样子。
+				到这儿还没完，我们在写资源url的时候还要特殊处理。
+				
+				首先增加如下配置：
+				
+				@ControllerAdvice
+				public class ControllerConfig {
+				
+				    @Autowired
+				    ResourceUrlProvider resourceUrlProvider;
+				
+				    @ModelAttribute("urls")
+				    public ResourceUrlProvider urls() {
+				        return this.resourceUrlProvider;
+				    }
+				}
+				然后在页面写的时候用下面的写法：
+				<link rel="stylesheet" type="text/css" href="${urls.getForLookupPath('/css/index.css')}">
+				使用urls.getForLookupPath('/css/index.css')来得到处理后的资源名。
+				
+		27.1.6 Welcome Page
+			Spring Boot supports both static and templated welcome pages. It first looks for an index.html file in the configured static content locations. 
+			If one is not found, it then looks for an index template. 
+			If either is found, it is automatically used as the welcome page of the application.
+
+		27.1.7 Custom Favicon
+			Spring Boot looks for a favicon.ico in the configured static content locations and the root of the classpath (in that order).
+			 If such a file is present, it is automatically used as the favicon of the application.
+			 实例中我们通过static文件夹下放置了一个新的favicon.ico替换了默认的ico文件。浏览器总发现，ico变成了搜狗的图标。如未显示，请删除缓存再看	
+		
+		27.1.8 Path Matching and Content Negotiation（路径匹配和内容协商）
+		SpringMvc可已经http请求映射到程序中定义的方法中（例如：使用@GetMapping注解在Controller的方法上）
+		
+		spring boot默认不支持后缀匹配，就是说，如果有一个/projects/spring-boot.json的get请求，那么它与@GetMapping("/projects/spring-boot")
+		是匹配不成功的，也就无法调用这个注解对应的方法。
+		
+		如果想使用类似于这种后缀匹配的功能，可以使用查询参数的方式，例如："GET /projects/spring-boot?format=json就可以匹配到
+		@GetMapping("/projects/spring-boot")上。
+		参照：http://blog.csdn.net/u012410733/article/details/78536656
+		https://www.newmediacampaigns.com/blog/browser-rest-http-accept-headers
+		
+	27.1.9 ConfigurableWebBindingInitializer
+		Spring MVC uses a WebBindingInitializer to initialize a WebDataBinder for a particular request. If you create your own ConfigurableWebBindingInitializer @Bean, 
+		Spring Boot automatically configures Spring MVC to use it.
+	
+	27.1.10 Template Engines（模板引擎）
+		除了REST风格的web服务，你也可以生成动态页面，spring mvc支持很多种模板技术，包括：Thymeleaf, FreeMarker, and JSP等等。
+		Spring Boot 自动支持以下几种模板：
+			1.FreeMarker
+			2.Groovy
+			3.Thymeleaf
+			4.Mustache		
+		Tip:如果可能的话，尽量不要使用JSP，因为spring boot内嵌的servlet container对jsp有一些限制（27.4.5 JSP Limitations）。
+		
+		如果使用使用上面的模板，要把模板文件放到src/main/resources/templates下，因为spring boot自动去这里找。
+	
+	27.1.11 Error Handling
+		默认情况下，spring boot通过一个/error映射来处理所有的errors，For machine clients，将会产生一个包含了error，http status，和异常信息的response。
+		如果是浏览器的情况下，会产生一个“whitelabel”的error视图。
+		
+		如果想自定义来处理不同的错误，显示不同的响应信息，例如可以使用下面的方式，自定义一个用来处理error的controller：
+		***********************************************************************
+		@ControllerAdvice(basePackageClasses = AcmeController.class)
+		public class AcmeControllerAdvice extends ResponseEntityExceptionHandler {
+			@ExceptionHandler(YourException.class)
+			@ResponseBody
+			ResponseEntity<?> handleControllerException(HttpServletRequest request, Throwable ex) {
+				HttpStatus status = getStatus(request);
+				return new ResponseEntity<>(new CustomErrorType(status.value(), ex.getMessage()), status);
+			}
+			private HttpStatus getStatus(HttpServletRequest request) {
+				Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
+				if (statusCode == null) {
+					return HttpStatus.INTERNAL_SERVER_ERROR;
+				}
+				return HttpStatus.valueOf(statusCode);
+			}
+		}
+		***********************************************************************
+		
+		当然也可以使用chapter/chapter27_1.java中的方式。方法很多。
+		
+	Custom Error Pages
+		上面的方式是不是显示响应的错误页面，只是显示一段json内容。如果想显示自定义的错误页面，可以通过下面方式：
+		例如，想通过一个400.html页面处理所有400错误，
+		**********************************************************************
+		public class MyErrorViewResolver implements ErrorViewResolver {
+			@Override
+			public ModelAndView resolveErrorView(HttpServletRequest request,
+					HttpStatus status, Map<String, Object> model) {
+				// Use the request or status to optionally return a ModelAndView
+				return ...
+			}
+		}
+		*******************************************************************
+	Mapping Error Pages outside of Spring MVC
+		如果我们没有使用mvc，无法直接通过自定义页面来处理错误信息，我们可以使用ErrorPageRegistrar接口，直接注册errorpage，
+		通过这种方式，会将处理直接注册到内嵌的servlet container中，让容器来帮我们映射不同错误，使用什么页面。如下：
+		**********************************************************************
+			@Bean
+			public ErrorPageRegistrar errorPageRegistrar(){
+				return new MyErrorPageRegistrar();
+			}
+			
+			// ...
+			
+			private static class MyErrorPageRegistrar implements ErrorPageRegistrar {
+			
+				@Override
+				public void registerErrorPages(ErrorPageRegistry registry) {
+					registry.addErrorPages(new ErrorPage(HttpStatus.BAD_REQUEST, "/400"));
+				}
+			
+			}
+		**********************************************************************
+		
+	27.1.12 Spring HATEOAS
+	27.1.13 CORS Support（跨域请求）
+		我们知道一般前端为了支持跨域请求会使用iframe或者jsonp这种安全性和灵活性比较低的方式。
+		springMVC从4.2版本后，开始支持CROS，通过在spring boot的程序的方法上使用 @CrossOrigin注解来支持跨域。
+		也可以通过注册一个WebMvcConfigurer bean来实现全局的CROS配置，如下：
+		****************************************************************
+			@Configuration
+			public class MyConfiguration {
+			
+				@Bean
+				public WebMvcConfigurer corsConfigurer() {
+					return new WebMvcConfigurer() {
+						@Override
+						public void addCorsMappings(CorsRegistry registry) {
+							registry.addMapping("/api/**");
+						}
+					};
+				}
+			}
+		****************************************************************
+	
+	27.2 The “Spring WebFlux Framework”
+		Spring WebFlux是spring5.0开始新增的一种reactive的web框架，不同于springmvc，它不需要Servlet API,它是一种异步的非堵塞的。暂时不详细翻译。
+		
+		
+	27.3 JAX-RS and Jersey
+	
+	
+	27.4 Embedded Servlet Container Support
+		Spring boot内嵌了 Tomcat, Jetty, and Undertow servers。开发者一般使用“Starter”来进行配置。默认情况下，嵌入的server监听8080端口。
+	
+	27.4.1 Servlets, Filters, and listeners
+		使用内嵌的servlet container时，我们也可以自定义注册servlets, filters, and all the listeners (such as HttpSessionListener)。
+		在spring boot中添加自己的Servlet、Filter、Listener有两种方法
+		方法一   springbean注册: 
+			通过ServletRegistrationBean、 FilterRegistrationBean 和ServletListenerRegistrationBean 获得控制。
+		方法二  自动扫描注册: 
+			在SpringBootApplication 上使用@ServletComponentScan注解后，
+			Servlet、Filter、Listener 可以直接通过 @WebServlet、@WebFilter、@WebListener 注解自动注册，无需其他代码。
+		
+		Registering Servlets, Filters, and Listeners as Spring Beans（方法一）
+			使用Spring Bean的好处是，可以非常方便的获取application.properties中配置的内容，
+		
+		spring boot默认使用的时mvc的映射，也就是默认“/”映射到springmvc的servlet中。如果我们想定义一个其他的servlet，比如访问/customerServlet,调用我们自定义的Servlet，就需要
+		我们注册一个自定义Servlet。方式参考 ：/chapter27/chapter27.4.1下的例子。
+		
+		
+		关于注册自定义的Filter，Listener实例中都有，方式与Servlet相似
+		
+		
+	27.4.2 Servlet Context Initialization
+		Embedded servlet containers不能直接执行Servlet 3.0+ javax.servlet.ServletContainerInitializer interface 和
+		Spring’s org.springframework.web.WebApplicationInitializer interface.
+		
+		如果想在spring boot中执行servlet context initialization，那么需要注册一个实现了org.springframework.boot.web.servlet.ServletContextInitializer的bean
+		然后就可以在onStartup方法中访问ServletContext 对象了，另外也可以通过实现WebApplicationInitializer接口的方式来实现。
+		参考实例ServletContextInitialization.java
+			
+		有了ServletContext对象后，我们在onStartup方法中也可以动态的注册自定义的Servlet，Filter，Listener。
+		参照实例：ServletContextInitialization.java（里面动态注册一个Filter）
+		
+		
+	27.4.3 The ServletWebServerApplicationContext
+		Under the hood, Spring Boot uses a different type of ApplicationContext for embedded servlet container support. 
+		The ServletWebServerApplicationContext is a special type of WebApplicationContext that bootstraps itself by searching 
+		for a single ServletWebServerFactory bean. Usually a TomcatServletWebServerFactory, JettyServletWebServerFactory,
+		 or UndertowServletWebServerFactory has been auto-configured.
+	
+		[Note]
+		You usually do not need to be aware of these implementation classes. Most applications are auto-configured, 
+		and the appropriate ApplicationContext and ServletWebServerFactory are created on your behalf.
+		
+	
+	27.4.4 Customizing Embedded Servlet Containers（https://www.cnblogs.com/softidea/p/6855002.html	）
+		通常我们通过配置application.properties来配置一些Common servlet container settings，配置一般包括以下几点：
+		1.Network settings: Listen port for incoming HTTP requests (server.port), interface address to bind to server.address, and so on.
+		2.Session settings: Whether the session is persistent (server.servlet.session.persistence), session timeout (server.servlet.session.timeout), location of session data (server.servlet.session.store-dir), and session-cookie configuration (server.servlet.session.cookie.*).
+		3.Error management: Location of the error page (server.error.path) and so on.
+		4.SSL
+		5.HTTP compression
+		spring boot尽可能多的让我们通过配置的形式来设置一些东西。但总有一些特殊情况，
+		
+		Programmatic Customization
+			如果我们想通过程序代码来配置 embedded servlet container的一些属性，我们可以注册一个实现了WebServerFactoryCustomizer接口的Spring bean。
+			WebServerFactoryCustomizer 提供了访问ConfigurableServletWebServerFactory的能力。ConfigurableServletWebServerFactory中就包含了大量我们可以进行修改的配置内容
+			我们只需要调用器set方法就可以进行设置。例如tomcat的port等信息，等可以从这里进行设置。
+			
+			如果感觉上面的方式有所局限时，可以通过注册TomcatServletWebServerFactory, JettyServletWebServerFactory, or UndertowServletWebServerFactory
+			，然后在代码中设置要进行的配置。
+			
+			两种实现方法请参考：chatper27/chapter27_4_4/ProgrammaticCustomization.java
+			
+	27.4.5 JSP Limitations
+		With Tomcat, it should work if you use war packaging. That is, an executable war works and is also deployable to a standard container (not limited to, but including Tomcat). An executable jar does not work because of a hard-coded file pattern in Tomcat.
+		With Jetty, it should work if you use war packaging. That is, an executable war works, and is also deployable to any standard container.
+		Undertow does not support JSPs.
+		Creating a custom error.jsp page does not override the default view for error handling. Custom error pages should be used instead.
+	
+		参考：https://github.com/spring-projects/spring-boot/tree/master/spring-boot-samples/spring-boot-sample-web-jsp
+		
+		
+		
+		

@@ -1,9 +1,8 @@
 package com.sarnath;
 
-import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.web.servlet.ServletComponentScan;
 
 /**
  * Hello world!
@@ -19,7 +18,8 @@ import org.springframework.context.annotation.Bean;
  *@ EnableTransactionManagement：启用注解式事务。
  */
 
-
+//此注解用于chapter27.4.1注册自定义Servlet的方式二。否则不需要此注解
+@ServletComponentScan
 @SpringBootApplication
 /**
  * @SpringBootApplication 包括了以下几种注解：
