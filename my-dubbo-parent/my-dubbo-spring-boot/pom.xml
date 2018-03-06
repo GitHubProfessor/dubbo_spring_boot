@@ -15,7 +15,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<start-class>com.sarnath.App</start-class>
-		<spring.boot.version>2.0.0.RELEASE</spring.boot.version><!-- 1.5.9.RELEASE -->
+		<spring.boot.version>1.5.9.RELEASE</spring.boot.version><!-- 1.5.9.RELEASE -->
 	</properties>
 
 
@@ -25,11 +25,11 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 			<version>${spring.boot.version}</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 			<version>${spring.boot.version}</version>
-		</dependency>
+		</dependency> -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
