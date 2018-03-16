@@ -1,0 +1,17 @@
+35. Validation
+	只要在classpath下有JSR-303的实现(such as Hibernate validator)，那么Validation就可以使用。然后只要在方法的参数上使用javax.validation下的注解来进行约束即可。
+	那么需要使用验证的类，必须在类上添加 @Validated 注解。
+	例如，下面的例子验证方法中参数的值是否在8到10之间
+	*********************************************************************************
+	*	@Service                                                                    *
+	*	@Validated                                                                  *
+	*	public class MyBean {                                                       *
+	*		public Archive findByCodeAndAuthor(@Size(min = 8, max = 10) String code,*
+	*				Author author) {                                                *
+	*		}                                                                       *
+	*	}                                                                           *
+	*********************************************************************************
+	
+	关于Validate的使用，有2中方法，一种是在bean中使用Validate，一种是在方法中使用。请参考chapter35中的例子。
+	
+	

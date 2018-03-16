@@ -1,0 +1,44 @@
+33. Calling REST Services with RestTemplate
+	如果你需要调用远程的REST 服务，你可以使用spring framwork的RestTemplate类，spring boot没有提供自动配置，所以使用前需要自定义和实例化一下。可以通过RestTemplateBuilder来实例化一个
+	RestTemplate。例子如下：
+	*********************************************************************************************
+	*	@Service                                                                               *
+	*	public class MyService {                                                               *
+	*		private final RestTemplate restTemplate;                                           *
+	*		public MyBean(RestTemplateBuilder restTemplateBuilder) {                           *
+	*			this.restTemplate = restTemplateBuilder.build();                               *
+	*		}                                                                                  *
+	*		public Details someRestCall(String name) {                                         *
+	*			return this.restTemplate.getForObject("/{name}/details", Details.class, name); *
+	*		}                                                                                  *
+	*	}                                                                                      *
+	********************************************************************************************
+	测试实例：test包下的chapter33/RestTemplateTest.java
+	
+	33.1 RestTemplate Customization
+		有三种方式可以自定义RestTemplate，这主要取决于主要用途。
+		RestTemplateBuilder ，RestTemplateCustomizer 
+		下面的例子，介绍了如果通过代理方式访问：
+		***************************************************************************************************************
+		*	static class ProxyCustomizer implements RestTemplateCustomizer {                                          *
+		*		@Override                                                                                             *
+		*		public void customize(RestTemplate restTemplate) {                                                    *
+		*			HttpHost proxy = new HttpHost("proxy.example.com");                                               *
+		*			HttpClient httpClient = HttpClientBuilder.create()                                                *
+		*					.setRoutePlanner(new DefaultProxyRoutePlanner(proxy) {                                    *
+		*						@Override                                                                             *
+		*						public HttpHost determineProxy(HttpHost target,                                       *
+		*								HttpRequest request, HttpContext context)throws HttpException {               *
+		*							if (target.getHostName().equals("192.168.0.5")) {                                 *
+		*								return null;                                                                  *
+		*							}                                                                                 *
+		*							return super.determineProxy(target, request, context);                            *
+		*						}                                                                                     *
+		*					}).build();                                                                               *
+		*			restTemplate.setRequestFactory(                                                                   *
+		*					new HttpComponentsClientHttpRequestFactory(httpClient));                                  *
+		*		}                                                                                                     *
+		*	}                                                                                                         *
+		***************************************************************************************************************
+		
+		

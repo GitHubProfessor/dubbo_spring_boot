@@ -1,0 +1,29 @@
+34. Calling REST Services with WebClient
+	如果使用了WebFlux，那么也可以选择WebClient来访问远程REST服务，相比restTemplate，这种方式更加功能性并且是全交互式。你可以使用builder创建一个独享的client，WebClient.create()。
+	具体使用可到spring5的在线文档查找relevant section on WebClient章节。
+	
+	spring boot自动为我们创建并且配置了一个builder，例如下面的例子。
+	*****************************************************************************************
+	*	@Service                                                                            *
+	*	public class MyService {                                                            *
+	*	                                                                                    *
+	*		private final WebClient webClient;                                              *
+	*	                                                                                    *
+	*		public MyBean(WebClient.Builder webClientBuilder) {                             *
+	*			this.webClient = webClientBuilder.baseUrl("http://example.org").build();    *
+	*		}                                                                               *
+	*	                                                                                    *
+	*		public Mono<Details> someRestCall(String name) {                                *
+	*			return this.webClient.get().url("/{name}/details", name)                    *
+	*							.retrieve().bodyToMono(Details.class);                      *
+	*		}                                                                               *
+	*	                                                                                    *
+	*	}                                                                                   *
+	*****************************************************************************************
+	
+	34.1 WebClient Customization
+	有三种主要的方式来定制WebClient。这取决于我们的使用场景。
+	如果想尽可能小的减小影响范围，则可以直使用接注入的WebClient.Builder。然后调用他的方法即可。
+	WebClient.Builder是有状态：builder上的任何一个变动，都会影响到所有的clients。如果想用同一个builder创建多个client，你可以考虑通过
+	WebClient.Builder other = builder.clone()来克隆builder。
+	另外也可以使用WebClientCustomizer 来定制一个builder。

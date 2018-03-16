@@ -1,0 +1,68 @@
+32. Messaging
+	32.1 JMS
+		javax.jms.ConnectionFactory接口为JMS broker提供了创建javax.jms.Connection的一个标准的方法，虽然spring需要ConnectionFactory接口来与JMS一同工作，
+		但是，一般来说您不需要直接使用它，而可以依赖于更高级别的消息抽象。
+		参考文档：https://docs.spring.io/spring/docs/5.0.5.BUILD-SNAPSHOT/spring-framework-reference/integration.html#jms
+		spring boot也会自动配置这些必要的基本配置来发送和接收消息。
+		
+		32.1.1 ActiveMQ Support
+			当时用ActiveMQ的时候，如果Spring boot发现classpath中有ActiveMQ，它就会自动配置一个ConnectionFactory。
+			ActiveMQ 的配置通过spring.activemq.*这样的方式进行配置。例如，我们在application.properties中进行如下配置：
+			***************************************************************************************
+				spring.activemq.broker-url=tcp://192.168.1.210:9876
+				spring.activemq.user=admin
+				spring.activemq.password=secret
+			***************************************************************************************
+		32.1.2 Artemis Support
+			暂不描述
+		32.1.3 Using a JNDI ConnectionFactory
+			暂不描述
+		32.1.4 Sending a Message
+			spring自动配置了一个JmsTemplate ，我们可以直接注入使用他来发送消息。例如：
+			*************************************************************************************
+			*	@Component                                                                      *
+			*	public class MyBean {                                                           *
+			*		private final JmsTemplate jmsTemplate;                                      *
+			*		@Autowired                                                                  *
+			*		public MyBean(JmsTemplate jmsTemplate) {                                    *
+			*			this.jmsTemplate = jmsTemplate;                                         *
+			*		}                                                                           *
+			*	}                                                                               *
+			*************************************************************************************
+			
+		32.1.5 Receiving a Message
+			当使用JMS时，可以使用一个@JmsListener来创建一个监听器endpoint。实时监听是否有消息发出。如果没有JmsListenerContainerFactory 被定义，会自动配置一个默认的监听器。
+			如果想创建多个JmsListenerContainerFactory 或者重写默认的。spring boot 提供了DefaultJmsListenerContainerFactoryConfigurer ，可以使用它去初始化一个
+			DefaultJmsListenerContainerFactory ，这个DefaultJmsListenerContainerFactory 会被spring boot自动加载而不是用默认的那个。
+			实例如下：
+			******************************************************************************************
+			*	@Configuration                                                                       *
+			*	static class JmsConfiguration {                                                      *
+			*		@Bean                                                                            *
+			*		public DefaultJmsListenerContainerFactory myFactory(                             *
+			*				DefaultJmsListenerContainerFactoryConfigurer configurer) {               *
+			*			DefaultJmsListenerContainerFactory factory =                                 *
+			*					new DefaultJmsListenerContainerFactory();                            *
+			*			configurer.configure(factory, connectionFactory());                          *
+			*			factory.setMessageConverter(myMessageConverter());                           *
+			*			return factory;                                                              *
+			*		}                                                                                *
+			*	}                                                                                    *
+			******************************************************************************************
+			
+			然后便可以使用注解来生命一个监听器，如下：
+			******************************************************************************************
+			*	@Component                                                                           *
+			*	public class MyBean {                                                                *
+			*		@JmsListener(destination = "someQueue", containerFactory="myFactory")            *
+			*		public void processMessage(String content) {                                     *
+			*		}                                                                                *
+			*	}                                                                                    *
+			******************************************************************************************
+			
+		32.2 AMQP
+			暂不描述
+			
+		32.3 Apache Kafka Support
+			暂不描述
+		

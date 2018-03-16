@@ -1,0 +1,24 @@
+41. Spring Session
+	spring boot 也提供了对Spring Session的自动配置。
+	spring session是一个用来对session集中管理的实现。详情可参考官网https://projects.spring.io/spring-session/
+	
+	当创建一个servelet web应用时，下面几个stores会被自动配置：
+		1. JDBC
+		2. Redis
+		3. Hazelcast
+		4. MongoDB
+		
+	当创建一个reactive web应用时，下面的stores会被自动配置
+		1. Redis
+		2. MongoDB	
+	如果 spring session是可用的，那么你必须选择一个你希望用来存储session的 StoreType，例如：如果想使用jdbc来存储session，那么需要在配置文件中做如下配置：
+	********************************************************
+		spring.session.store-type=jdbc
+	********************************************************
+	Tip：我们也可以将spring session设置为不可用。通过将store-type=none即可。
+	
+	每个store还可以设置一些其他的设定。例如为jdbc store配置一个自定义名字：
+	************************************************************
+	spring.session.jdbc.table-name=SESSIONS
+	***********************************************************
+	

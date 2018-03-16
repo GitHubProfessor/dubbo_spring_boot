@@ -1,0 +1,49 @@
+31. Caching
+	spring framework 提供了对缓存的透明化支持。对缓存的使用直接应用于方法上，而不需要在代码中进行调用。
+	只要在spring boot中配置了@EnableCaching注解，spring boot便会自动做好对缓存的一些基础配置。
+	
+	对一个操作添加缓存功能，只需要在方法上添加相关的缓存注解就行，如下：
+	**************************************************************************************
+	*	import org.springframework.cache.annotation.Cacheable                            *
+	*	import org.springframework.stereotype.Component;                                 *
+	*	@Component                                                                       *
+	*	public class MathService {                                                       *
+	*		@Cacheable("piDecimals")                                                     *
+	*		public int computePiDecimal(int i) {                                         *
+	*			// ...                                                                   *
+	*		}                                                                            *
+	*	}                                                                                *
+	**************************************************************************************
+	上面的展示中当调用[piDecimals]方法时，会先从缓存中查找是否已有相关的缓存，如果有的话，直接将缓存中保存的结果返回，而不会执行方法中的内容。
+	如果你没有添加特定的缓存 library，spring boot会自动配置一个 simple provider（在内存中用map构建的一个缓存系统）。但是生产中不介意使用这种方式。
+	最好还是使用相关专业的缓存library（ecache等）。
+	如果想更改缓存的一些配置属性，可在配置文件application.properties中使用spring.cache.cache-names 属性来配置
+	
+	31.1 Supported Cache Providers（支持的缓存）
+		1.Generic
+		2.JCache (JSR-107) (EhCache 3, Hazelcast, Infinispan, and others)
+		3.EhCache 2.x
+		4.Hazelcast
+		5.Infinispan
+		6.Couchbase
+		7.Redis
+		8.Caffeine
+		9.Simple
+		
+		Tip:使用spring-boot-starter-cache “Starter”，可快速添加缓存相关的依赖。“Starts”会帮我们自动获取了spring-context-support，如果我们是手动添加依赖的话，
+		一定要加载上spring-context-support的依赖。
+		
+		如果使用spring boot自动配置CacheManager，你可以在他被完全初始化完成前，通过实现一个CacheManagerCustomizer接口的spring bean来进一步调整配置。如下：
+		********************************************************************************************
+		*	@Bean                                                                                  *
+		*	public CacheManagerCustomizer<ConcurrentMapCacheManager> cacheManagerCustomizer() {    *
+		*		return new CacheManagerCustomizer<ConcurrentMapCacheManager>() {                   *
+		*			@Override                                                                      *
+		*			public void customize(ConcurrentMapCacheManager cacheManager) {                *
+		*				cacheManager.setAllowNullValues(false);                                    *
+		*			}                                                                              *
+		*		};                                                                                 *
+		*	}                                                                                      *
+		********************************************************************************************
+		具体每种第三方cache的使用，请参考其他文档。此处不做一一解释。
+		

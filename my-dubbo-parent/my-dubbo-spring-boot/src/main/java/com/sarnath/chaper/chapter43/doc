@@ -1,0 +1,125 @@
+43. Testing
+	Spring boot 提供了一系列的方法去测试应用。对于test的支持主要依靠两个模块：spring-boot-test（核心）和spring-boot-test-autoconfigure（自动配置）
+	大多数的开发者使用spring-boot-starter-test “Starter”，它导入了 JUnit, AssertJ, Hamcrest和其他一些有用的libraries。
+	
+	43.1 Test Scope Dependencies
+		spring-boot-starter-test “Starter”包含了下面一些libraies：
+			1. JUnit: The de-facto standard for unit testing Java applications.
+			2. Spring Test & Spring Boot Test: Utilities and integration test support for Spring Boot applications.
+			3. AssertJ: A fluent assertion library.
+			4. Hamcrest: A library of matcher objects (also known as constraints or predicates).
+			5. Mockito: A Java mocking framework.
+			6. JSONassert: An assertion library for JSON.
+			7. JsonPath: XPath for JSON.
+		如果你觉得这些library不太适合你的测试，你可以单独添加其他的测试library。
+		
+	
+	43.2 Testing Spring Applications
+		dependency injection的一个主要的优势就是可以让你的代码容易单元测试。
+		关于测试你的官方：https://docs.spring.io/spring/docs/5.0.5.BUILD-SNAPSHOT/spring-framework-reference/testing.html#testing
+	
+	43.3 Testing Spring Boot Applications
+		spring boot提供了一个@SpringBootTest注解，当我们想使用spring boot的一些功能时，它可以用来替换pring-test @ContextConfiguration注解。
+		这个注解将创建ApplicationContext。也就是说这个注解可以直接获取到spring容器中注册的bean，然后使用@Autowired便可以获取到bean
+		
+		您可以使用“springboottest的webEnvironment环境属性进一步细化你的测试运行，如下面便是web相关的一些属性，通过他们可以做一些相关方式的测试：
+		1. MOCK：读取WebApplicationContext然后提供跟一个 mock servlet environment，内置的Servlet容器并没有真实的启动。
+				如果classpath中没有servelet api，那么便会创建一个ApplicationContext。它可以与@AutoConfigureMockMvc注解一起使用，来进行MockMvc测试。
+		
+		2. RANDOM_PORT：加载ServletWebServerApplicationContext，并且提供一个真实的servlet环境，内嵌的servlet容器将被启动，然后使用一个随机random port，并监听它
+
+		3.DEFINED_PORT：加载ServletWebServerApplicationContext，并且提供一个真实的servlet环境，内嵌的servlet容器将被启动，然后会监听我们在application.properties中定义的端口号，或者
+						默认的8080端口。
+		4.NONE:会加载一个ApplicationContext ，但是跟Mock一样也不提供真实的Servlet环境
+		
+		关于 webEnvironment的RANDOM_PORT属性的使用，参考test文件夹中的chatper43
+		
+		43.3.1 Detecting Web Application Type
+			如果springmvc可用，一个基于spring-mvc的context将会被自动配置。如果是spring WebFlux可用，将会生成一个基于WebFlux的context。
+			如果两个同时可用，那么springmvc的context会优先被配置。如果我们想测试一个reactive的web application。那么必须设置spring.main.web-application-type property。如下：
+			**********************************************************************************
+				@RunWith(SpringRunner.class)
+				@SpringBootTest(properties = "spring.main.web-application-type=reactive")
+				public class MyWebFluxTests { ... }
+			**********************************************************************************
+		
+		43.3.2 Detecting Test Configuration
+			如果你非常熟悉spring test Framework，你可以使用@ContextConfiguration(classes=…​)这种方式来指明，加载哪些使用了@Configuration的类。
+			当测试spring boot application时，一般就不需要这么做了，spring boot的@*Test注解会自动去检索哪些
+			补充：https://segmentfault.com/a/1190000010854811
+			
+		43.3.3 Excluding Test Configuration
+			如果程序中使用component scanning (for example, if you use @SpringBootApplication or @ComponentScan)，我们会发现，所有的configuration classes 都会被获取到。
+			正如我们前面看到的， @TestConfiguration可以在测试类的内部类上使用，从而是实现一些自定义的的configuration。但如果我们包含 @TestConfiguration的类放到其他的位置，那么 自动扫描就无法获取到他们了。
+			。这种情况下，如果我哦们在测试类中还想要使用@TestConfiguration配置的类，我们可以使用下面的方法显式的导入它：
+			********************************************************************************
+				@RunWith(SpringRunner.class)
+				@SpringBootTest
+				@Import(MyTestsConfiguration.class)
+				public class MyTests {
+					@Test
+					public void exampleTest() {
+						...
+					}
+				}
+			********************************************************************************
+			如果你直接使用@ComponentScan而不是通过 @SpringBootApplication，你需要注册TypeExcludeFilter
+			
+		43.3.4 Testing with a running server
+			如果你测试时候想让服务器完全启动起来的方式，那么我们建议你使用一个 random ports。使用@SpringBootTest(webEnvironment=WebEnvironment.RANDOM_PORT)便可以在启动测试的时候，创建一个随机端口。
+			如果在测试类中使用你配置的端口号，那么可以使用@LocalServerPort注解，这个注解会把配置文件中设置server端口号注入进来。
+			
+			下面提供了几种测试rest的方式：
+			************************************************************************************************
+			*	import org.junit.Test;                                                                     *
+			*	import org.junit.runner.RunWith;                                                           *
+			*	                                                                                           *
+			*	import org.springframework.beans.factory.annotation.Autowired;                             *
+			*	import org.springframework.boot.test.context.SpringBootTest;                               *
+			*	import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;                *
+			*	import org.springframework.test.context.junit4.SpringRunner;                               *
+			*	import org.springframework.test.web.reactive.server.WebTestClient;                         *
+			*	                                                                                           *
+			*	@RunWith(SpringRunner.class)                                                               *
+			*	@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)                               *
+			*	public class RandomPortWebTestClientExampleTests {                                         *
+			*	                                                                                           *
+			*		@Autowired                                                                             *
+			*		private WebTestClient webClient;                                                       *
+			*	                                                                                           *
+			*		@Test                                                                                  *
+			*		public void exampleTest() {                                                            *
+			*			this.webClient.get().uri("/").exchange().expectStatus().isOk()                     *
+			*					.expectBody(String.class).isEqualTo("Hello World");                        *
+			*		}                                                                                      *
+			*	                                                                                           *
+			*	}                                                                                          *
+			************************************************************************************************
+			另外亦可以使用TestRestTemplate 
+			*************************************************************************************************
+			*	import org.junit.Test;                                                                      *
+			*	import org.junit.runner.RunWith;                                                            *
+			*	                                                                                            *
+			*	import org.springframework.beans.factory.annotation.Autowired;                              *
+			*	import org.springframework.boot.test.context.SpringBootTest;                                *
+			*	import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;                 *
+			*	import org.springframework.boot.test.web.client.TestRestTemplate;                           *
+			*	import org.springframework.test.context.junit4.SpringRunner;                                *
+			*	                                                                                            *
+			*	import static org.assertj.core.api.Assertions.assertThat;                                   *
+			*	                                                                                            *
+			*	@RunWith(SpringRunner.class)                                                                *
+			*	@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)                                *
+			*	public class RandomPortTestRestTemplateExampleTests {                                       *
+			*	                                                                                            *
+			*		@Autowired                                                                              *
+			*		private TestRestTemplate restTemplate;                                                  *
+			*	                                                                                            *
+			*		@Test                                                                                   *
+			*		public void exampleTest() {                                                             *
+			*			String body = this.restTemplate.getForObject("/", String.class);                    *
+			*			assertThat(body).isEqualTo("Hello World");                                          *
+			*		}                                                                                       *
+			*	}                                                                                           *
+			*************************************************************************************************
+			

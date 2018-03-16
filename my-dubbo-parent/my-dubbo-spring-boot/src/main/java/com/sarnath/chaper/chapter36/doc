@@ -1,0 +1,12 @@
+36. Sending Email
+	spring framework提供了一个简单的接口JavaMailSender来发送邮件。spring boot通过视同start下载依赖后，便会自动配置相关内容。
+	如果相关的liabary是可用的，那么spring boot默认会自动创建JavaMailSender 。一些相关的配置，可以再application.properties中以spring.mail.*的方式进行配置。如：
+	******************************************************************************
+		spring.mail.properties.mail.smtp.connectiontimeout=5000
+		spring.mail.properties.mail.smtp.timeout=3000
+		spring.mail.properties.mail.smtp.writetimeout=5000
+	******************************************************************************
+	
+	详细使用教程官网：https://docs.spring.io/spring/docs/5.0.5.BUILD-SNAPSHOT/spring-framework-reference/integration.html#mail
+	
+	

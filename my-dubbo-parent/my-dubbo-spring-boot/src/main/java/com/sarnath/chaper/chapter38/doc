@@ -1,0 +1,17 @@
+38. Hazelcast
+	如果classpath中存在Hazelcast，spring boot会自动配置一个HazelcastInstance注入到容器中，我们可以直接在代码中使用。
+	如果我们定义了一个com.hazelcast.config.Config，那么spring boot便会使用这个配置。
+	如果我们的configuration中定义了一个Hazelcast的实例名，那么spring boot会尝试在本地查找这个实例，而不会重新创建一个新的。
+	我们也可以将一个xml格式的配置文件，赋值给configuration属性。如下：
+	***************************************************************************************
+		spring.hazelcast.config=classpath:config/my-hazelcast.xml
+	***************************************************************************************
+	另外，spring boot也会从默认的本地文件hazelcast.xml去查询相关的Hazelcast configuration 。
+	更多的详情请参考官网：http://docs.hazelcast.org/docs/latest/manual/html-single/
+	
+	
+	如果在classpath中有hazelcast-client的存在，spring boot会尝试通过下面几步获取相关的配置，然后创建一个client：
+	1.从一个com.hazelcast.client.config.ClientConfig bean中查找
+	2.spring.hazelcast.config属性中查找
+	3.从系统属性的hazelcast.client.config中查找。
+	4.从classpath的根目录下的hazelcast-client.xml中查找。

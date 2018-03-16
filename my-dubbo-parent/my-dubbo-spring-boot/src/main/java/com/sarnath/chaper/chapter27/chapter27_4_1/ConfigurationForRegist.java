@@ -26,12 +26,12 @@ public class ConfigurationForRegist {
 	 * 然后在App.java类上添加@ServletComponentScan注解来扫描
 	 * @return
 	 */
-	@Bean
+	/*@Bean
 	public ServletRegistrationBean registCustomerServlet() {
 		ServletRegistrationBean registration = new ServletRegistrationBean(new MyServlet());
 		registration.addUrlMappings("/registCustomerServletMethod1");
 		return registration;
-	}
+	}*/
 	
 	/**
 	 * 添加一个自定义Filter和Servlet是相同的
@@ -40,22 +40,22 @@ public class ConfigurationForRegist {
 	 * 如果访问其他的例如http://localhost:8089/registCustomerServletMethod2则不会被此Filter拦截
 	 * @return
 	 */
-	@Bean  
+	/*@Bean  
     public FilterRegistrationBean registCustomerFilter() {  
         FilterRegistrationBean myFilter = new FilterRegistrationBean();  
         myFilter.addUrlPatterns("/registCustomerFilterMethod1/*");  
         myFilter.setFilter(new MyFilter());  
         return myFilter;  
-    }  
+    }  */
 	
 	/**
 	 * 注册自定义Listener方式一（Spring bean方式）
 	 * @return
 	 */
-	@Bean
+	/*@Bean
 	public ServletListenerRegistrationBean registCustomerListener() {
 		 ServletListenerRegistrationBean<MyListener> myListener = new ServletListenerRegistrationBean<MyListener>();  
 	        myListener.setListener(new MyListener());  
 	        return myListener;  
-	}
+	}*/
 }
